@@ -46,4 +46,5 @@ public class CreateProductRequest {
     @NotNull(message = "isFeatured is required")
     private Boolean isFeatured;
 
+    private List<ProductImageAdminRequest> images;
 }

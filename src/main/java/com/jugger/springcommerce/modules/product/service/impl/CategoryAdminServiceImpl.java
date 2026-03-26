@@ -11,6 +11,7 @@ import com.jugger.springcommerce.modules.product.service.CategoryAdminService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.text.Normalizer;
 import java.util.List;
@@ -24,6 +25,7 @@ public class CategoryAdminServiceImpl implements CategoryAdminService {
     private final JdbcTemplate jdbcTemplate;
 
     @Override
+    @Transactional
     public CategoryAdminResponse addCategory(CreateCategoryAdminRequest createCategoryAdminRequest) {
         String slug = generateUniqueSlug(createCategoryAdminRequest.getName(), null);
 
@@ -115,3 +117,4 @@ public class CategoryAdminServiceImpl implements CategoryAdminService {
         return jdbcTemplate.query(sql, (rs, rowNum) -> categoryMapper.mapRowToAdminResponseForOptions(rs));
     }
 }
+

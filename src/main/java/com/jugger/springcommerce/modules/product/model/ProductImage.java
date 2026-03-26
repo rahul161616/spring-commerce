@@ -2,12 +2,14 @@ package com.jugger.springcommerce.modules.product.model;
 
 import com.jugger.springcommerce.common.audit.BaseAuditEntity;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 @Getter
 @Setter
 @Entity
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 @Table(
         name = "product_images",
         indexes = {
@@ -19,7 +21,7 @@ public class ProductImage extends BaseAuditEntity {
 
     @Id
     @GeneratedValue(strategy= GenerationType.SEQUENCE,generator="product_images_seq_gen")
-    @SequenceGenerator(name="product_images_seq_gen",sequenceName = "product_images_seq_id",allocationSize = 1)
+    @SequenceGenerator(name="product_images_seq_gen",sequenceName = "product_images_id_seq",allocationSize = 1)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
