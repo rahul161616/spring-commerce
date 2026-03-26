@@ -1,6 +1,7 @@
 package com.jugger.springcommerce.modules.product.service.impl;
 
 import com.jugger.springcommerce.common.exception.AlreadyExistsException;
+import com.jugger.springcommerce.common.exception.BusinessException;
 import com.jugger.springcommerce.common.exception.ResourceNotFoundException;
 import com.jugger.springcommerce.modules.product.dto.admin.CreateProductRequest;
 import com.jugger.springcommerce.modules.product.dto.admin.ProductAdminResponse;
@@ -18,7 +19,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -47,20 +50,9 @@ public class ProductAdminServiceImpl implements ProductAdminService {
                 .stockQuantity(request.getStockQuantity())
                 .category(category)
                 .build();
-        productRepository.save(product);
-        if(request.getTagIds()!=null && !request.getTagIds().isEmpty()){
-            List<Tag> tags = tagRepository.findAllById(request.getTagIds());
-
-            for(Tag tag:tags){
-                ProductTag productTag = ProductTag.builder()
-                        .product(product)
-                        .tag(tag)
-                        .build();
-                productTagRepository.save(productTag);
-                product.getProductTags().add(productTag);
-            }
-        }
-        return mapper.mapToAdminResponse(product);
+        Product saved = productRepository.save(product);
+        attachTags(saved, request.getTagIds());
+        return mapper.mapToAdminResponse(saved);
     }
 
     public ProductAdminResponse getProductById(Long id){
@@ -86,5 +78,37 @@ public class ProductAdminServiceImpl implements ProductAdminService {
                 """;
 
         return jdbcTemplate.query(sql, (rs, rowNum) -> mapper.mapRowToAdminResponse(rs));
+    }
+
+    private void attachTags(Product product, List<Long> tagIds) {
+        if (tagIds == null || tagIds.isEmpty()) {
+            return;
+        }
+
+        Set<Long> uniqueTagIds = new HashSet<>(tagIds);
+
+        List<Tag> tags = tagRepository.findAllByIdIn(uniqueTagIds);
+
+        if (tags.size() != uniqueTagIds.size()) {
+            throw new BusinessException("One or more tags do not exist");
+        }
+
+        List<Long> inactiveTagIds = tags.stream()
+                .filter(tag -> Boolean.FALSE.equals(tag.getIsActive()))
+                .map(Tag::getId)
+                .toList();
+
+        if (!inactiveTagIds.isEmpty()) {
+            throw new BusinessException("Inactive tags cannot be assigned to product");
+        }
+
+        for (Tag tag : tags) {
+            ProductTag productTag = ProductTag.builder()
+                    .product(product)
+                    .tag(tag)
+                    .build();
+            productTagRepository.save(productTag);
+            product.getProductTags().add(productTag);
+        }
     }
 }

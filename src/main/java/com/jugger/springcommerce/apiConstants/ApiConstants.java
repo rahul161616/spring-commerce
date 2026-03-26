@@ -6,4 +6,6 @@ public class ApiConstants {
     public static final String PRODUCT_PRODUCT_API = BASE_URL + "/public";
     public static final String ADMIN_CATEGORIES_API = BASE_URL + "/admin/categories";
     public static final String PUBLIC_CATEGORIES_API = BASE_URL + "/public/categories";
+    public static final String ADMIN_TAGS_API = BASE_URL + "/admin/tags";
+    public static final String PUBLIC_TAGS_API = BASE_URL + "/public/tags";
 }
