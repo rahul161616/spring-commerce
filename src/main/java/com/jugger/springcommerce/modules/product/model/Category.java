@@ -2,8 +2,7 @@ package com.jugger.springcommerce.modules.product.model;
 
 import com.jugger.springcommerce.common.audit.BaseAuditEntity;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -11,6 +10,7 @@ import java.util.Set;
 @Getter
 @Setter
 @Entity
+@Builder
 @Table(
         name = "categories",
         indexes = {
@@ -19,6 +19,8 @@ import java.util.Set;
                 @Index(name = "idx_categories_parent_id", columnList = "parent_id")
         }
 )
+@AllArgsConstructor
+@NoArgsConstructor
 public class Category extends BaseAuditEntity {
     @Id
     @GeneratedValue(strategy= GenerationType.SEQUENCE,generator="categories_seq_gen")
@@ -34,6 +36,7 @@ public class Category extends BaseAuditEntity {
     private String description;
 
     @Column(name = "is_active", nullable = false)
+    @Builder.Default
     private Boolean isActive = true;
 
     @ManyToOne(fetch = FetchType.LAZY)
