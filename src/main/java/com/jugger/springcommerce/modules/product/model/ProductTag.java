@@ -1,9 +1,7 @@
 package com.jugger.springcommerce.modules.product.model;
 
 import jakarta.persistence.*;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.time.Instant;
 
@@ -11,6 +9,8 @@ import java.time.Instant;
 @Setter
 @Entity
 @Builder
+@AllArgsConstructor
+@NoArgsConstructor
 @Table(
         name = "product_tags",
         uniqueConstraints = {
@@ -24,7 +24,7 @@ import java.time.Instant;
 public class ProductTag {
     @Id
     @GeneratedValue(strategy= GenerationType.SEQUENCE,generator="product_tags_seq_gen")
-    @SequenceGenerator(name="product_tags_seq_gen",sequenceName = "product_tags_seq_id",allocationSize = 1)
+    @SequenceGenerator(name="product_tags_seq_gen",sequenceName = "product_tags_id_seq",allocationSize = 1)
     private Long id;
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "product_id", nullable = false)
@@ -50,3 +50,4 @@ public class ProductTag {
         }
     }
 }
+

@@ -45,4 +45,5 @@ public class CreateProductRequest {
 
     @NotNull(message = "isFeatured is required")
     private Boolean isFeatured;
+
 }
