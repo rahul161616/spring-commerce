@@ -20,4 +20,6 @@ public class ProductAdminResponse {
     private Integer stockQuantity;
     private String categoryName;
     private List<String> tags;
+    private List<ProductImageAdminResponse> images;
+
 }
