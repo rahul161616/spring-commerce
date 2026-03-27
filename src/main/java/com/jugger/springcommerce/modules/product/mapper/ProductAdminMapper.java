@@ -89,4 +89,28 @@ public class ProductAdminMapper {
                 })
                 .toList();
     }
+    public ProductAdminResponse mapProductByIdRowToAdminResponse(ResultSet rs) throws SQLException {
+        String tagsValue = rs.getString("tags");
+        List<String> tags = tagsValue == null || tagsValue.isBlank()
+                ? List.of()
+                : Arrays.stream(tagsValue.split(","))
+                .map(String::trim)
+                .filter(value -> !value.isEmpty())
+                .toList();
+
+        String imagesValue = rs.getString("images_data");
+        List<ProductImageAdminResponse> images = parseImages(imagesValue);
+
+        return ProductAdminResponse.builder()
+                .id(rs.getLong("id"))
+                .name(rs.getString("name"))
+                .slug(rs.getString("slug"))
+                .price(rs.getBigDecimal("price"))
+                .stockQuantity(rs.getInt("stock_quantity"))
+                .categoryName(rs.getString("category_name"))
+                .tags(tags)
+                .images(images)
+                .build();
+
+    }
 }

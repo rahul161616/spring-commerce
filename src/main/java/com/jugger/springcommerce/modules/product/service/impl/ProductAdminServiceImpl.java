@@ -6,6 +6,7 @@ import com.jugger.springcommerce.common.exception.ResourceNotFoundException;
 import com.jugger.springcommerce.modules.product.dto.admin.CreateProductRequest;
 import com.jugger.springcommerce.modules.product.dto.admin.ProductAdminResponse;
 import com.jugger.springcommerce.modules.product.dto.admin.ProductImageAdminRequest;
+import com.jugger.springcommerce.modules.product.enums.ProductStatus;
 import com.jugger.springcommerce.modules.product.mapper.ProductAdminMapper;
 import com.jugger.springcommerce.modules.product.model.Category;
 import com.jugger.springcommerce.modules.product.model.Product;
@@ -19,6 +20,7 @@ import com.jugger.springcommerce.modules.product.repository.ProductTagRepository
 import com.jugger.springcommerce.modules.product.repository.TagRepository;
 import com.jugger.springcommerce.modules.product.service.ProductAdminService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -45,10 +47,13 @@ public class ProductAdminServiceImpl implements ProductAdminService {
             throw new AlreadyExistsException("Product with same slug already exists.");
         }
 
-        Category category = categoryRepository.findById(request.getCategoryId()).orElseThrow(
-                () -> new ResourceNotFoundException("Category not found")
+//        Category category = categoryRepository.findById(request.getCategoryId()).orElseThrow(
+//                () -> new ResourceNotFoundException("Category not found")
+//        );
+        Category category = categoryRepository.findByIdAndIsActiveTrue(request.getCategoryId())
+                .orElseThrow(
+                () -> new ResourceNotFoundException("Cannot add product to inactive category")
         );
-
         Product product = Product.builder()
                 .name(request.getName())
                 .slug(slug)
@@ -64,39 +69,6 @@ public class ProductAdminServiceImpl implements ProductAdminService {
 
     public ProductAdminResponse getProductById(Long id){
         return null;
-    }
-
-    @Override
-    public List<ProductAdminResponse> getAllProductsForAdmin() {
-        String sql = """
-                SELECT p.id,
-                       p.name,
-                       p.slug,
-                       p.price,
-                       p.stock_quantity,
-                       c.name AS category_name,
-                       COALESCE(tag_data.tags, '') AS tags,
-                       COALESCE(image_data.images_data, '') AS images_data
-                FROM products p
-                JOIN categories c ON c.id = p.category_id
-                LEFT JOIN LATERAL (
-                    SELECT STRING_AGG(t.slug, ',' ORDER BY t.slug) AS tags
-                    FROM product_tags pt
-                    JOIN tags t ON t.id = pt.tag_id
-                    WHERE pt.product_id = p.id
-                ) tag_data ON true
-                LEFT JOIN LATERAL (
-                    SELECT STRING_AGG(
-                               CONCAT(pi.id, CHR(31), pi.image_url, CHR(31), pi.is_primary, CHR(31), pi.display_order),
-                               CHR(30) ORDER BY pi.display_order
-                           ) AS images_data
-                    FROM product_images pi
-                    WHERE pi.product_id = p.id
-                ) image_data ON true
-                ORDER BY p.id DESC
-                """;
-
-        return jdbcTemplate.query(sql, (rs, rowNum) -> mapper.mapRowToAdminResponse(rs));
     }
 
     private void attachTags(Product product, List<Long> tagIds) {
@@ -167,6 +139,82 @@ public class ProductAdminServiceImpl implements ProductAdminService {
             productImageRepository.save(productImage);
             product.getImages().add(productImage);
         }
+    }
+
+    @Override
+    public List<ProductAdminResponse> getAllProductsForAdmin() {
+        String sql = """
+                SELECT p.id,
+                       p.name,
+                       p.slug,
+                       p.price,
+                       p.stock_quantity,
+                       c.name AS category_name,
+                       COALESCE(tag_data.tags, '') AS tags,
+                       COALESCE(image_data.images_data, '') AS images_data
+                FROM products p
+                JOIN categories c ON c.id = p.category_id
+                LEFT JOIN LATERAL (
+                    SELECT STRING_AGG(t.slug, ',' ORDER BY t.slug) AS tags
+                    FROM product_tags pt
+                    JOIN tags t ON t.id = pt.tag_id
+                    WHERE pt.product_id = p.id
+                ) tag_data ON true
+                LEFT JOIN LATERAL (
+                    SELECT STRING_AGG(
+                               CONCAT(pi.id, CHR(31), pi.image_url, CHR(31), pi.is_primary, CHR(31), pi.display_order),
+                               CHR(30) ORDER BY pi.display_order
+                           ) AS images_data
+                    FROM product_images pi
+                    WHERE pi.product_id = p.id
+                ) image_data ON true
+                ORDER BY p.id DESC
+                """;
+
+        return jdbcTemplate.query(sql, (rs, rowNum) -> mapper.mapRowToAdminResponse(rs));
+    }
+    @Override
+    public ProductAdminResponse getProductByIdForAdmin(Long id) {
+            String sql = """
+            SELECT p.id,
+                   p.name,
+                   p.slug,
+                   p.price,
+                   p.stock_quantity,
+                   c.name AS category_name,
+                   COALESCE(tag_data.tags, '') AS tags,
+                   COALESCE(image_data.images_data, '') AS images_data
+            FROM products p
+            JOIN categories c ON c.id = p.category_id
+            LEFT JOIN LATERAL (
+                SELECT STRING_AGG(t.slug, ',' ORDER BY t.slug) AS tags
+                FROM product_tags pt
+                JOIN tags t ON t.id = pt.tag_id
+                WHERE pt.product_id = p.id
+            ) tag_data ON true
+            LEFT JOIN LATERAL (
+                SELECT STRING_AGG(
+                           CONCAT(pi.id, CHR(31), pi.image_url, CHR(31), pi.is_primary, CHR(31), pi.display_order),
+                           CHR(30) ORDER BY pi.display_order
+                       ) AS images_data
+                FROM product_images pi
+                WHERE pi.product_id = p.id
+            ) image_data ON true
+            WHERE p.id = ?
+            """;
+
+            try {
+                return jdbcTemplate.queryForObject(sql, (rs, rowNum) -> mapper.mapProductByIdRowToAdminResponse(rs), id);
+            } catch (EmptyResultDataAccessException e) {
+                throw new ResourceNotFoundException("Product not found with id: " + id);
+            }
+    }
+    public void softDeleteProductById(Long id){
+        Product product = productRepository.findById(id).orElseThrow(
+                ()-> new ResourceNotFoundException("Product not found or is already deleted.")
+        );
+        product.setStatus(ProductStatus.ACTIVE);
+        productRepository.save(product);
     }
 }
 
