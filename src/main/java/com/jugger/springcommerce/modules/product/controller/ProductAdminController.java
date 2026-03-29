@@ -1,8 +1,7 @@
 package com.jugger.springcommerce.modules.product.controller;
 
 import com.jugger.springcommerce.apiConstants.ApiConstants;
-import com.jugger.springcommerce.modules.product.dto.admin.CreateProductRequest;
-import com.jugger.springcommerce.modules.product.dto.admin.ProductAdminResponse;
+import com.jugger.springcommerce.modules.product.dto.admin.*;
 import com.jugger.springcommerce.modules.product.service.ProductAdminService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -36,8 +35,18 @@ public class ProductAdminController {
         return ResponseEntity.ok().body(response);
     }
     @DeleteMapping("/{id}/product")
-    public ResponseEntity<Void> softDeleteProduct(@PathVariable("id") Long id){
+    public ResponseEntity<Void> softDeleteProduct(@PathVariable Long id){
         productAdminService.softDeleteProductById(id);
         return ResponseEntity.noContent().build();
+    }
+    @PatchMapping("/{id}/update-product")
+    public ResponseEntity<ProductAdminResponse> updateProduct(@PathVariable Long id, @Valid @RequestBody UpdateProductAdminRequest request) {
+        ProductAdminResponse response = productAdminService.updateProductByAdmin(id,request);
+        return ResponseEntity.ok().body(response);
+    }
+    @PatchMapping("/status/update-product")
+    public ResponseEntity<UpdateStatusResponseForAdmin> updateProduct(@Valid @RequestBody UpdateStatusRequestByAdmin updateStatusRequestByAdmin) {
+        UpdateStatusResponseForAdmin response = productAdminService.updateProductStatusByAdmin(updateStatusRequestByAdmin);
+        return ResponseEntity.ok().body(response);
     }
 }

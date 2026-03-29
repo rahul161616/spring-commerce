@@ -1,0 +1,7 @@
+.gradle/
+build/
+.idea/
+
+src/main/resources/application-dev.properties
+
+*.log
