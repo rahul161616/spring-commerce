@@ -2,6 +2,8 @@ package com.jugger.springcommerce.modules.product.mapper;
 
 import com.jugger.springcommerce.modules.product.dto.admin.ProductAdminResponse;
 import com.jugger.springcommerce.modules.product.dto.admin.ProductImageAdminResponse;
+import com.jugger.springcommerce.modules.product.dto.admin.UpdateStatusResponseForAdmin;
+import com.jugger.springcommerce.modules.product.enums.ProductStatus;
 import com.jugger.springcommerce.modules.product.model.Product;
 import com.jugger.springcommerce.modules.product.model.ProductImage;
 import org.springframework.stereotype.Component;
@@ -22,9 +24,12 @@ public class ProductAdminMapper {
                 .id(product.getId())
                 .name(product.getName())
                 .slug(product.getSlug())
+                .description(product.getDescription())
                 .price(product.getPrice())
                 .stockQuantity(product.getStockQuantity())
                 .categoryName(product.getCategory() != null ? product.getCategory().getName() : null)
+                .isFeatured(product.getIsFeatured())
+                .status(product.getStatus())
                 .build();
         List<String> tags = product.getProductTags().stream().map(pt -> pt.getTag().getSlug())
                 .toList();
@@ -54,9 +59,12 @@ public class ProductAdminMapper {
                 .id(rs.getLong("id"))
                 .name(rs.getString("name"))
                 .slug(rs.getString("slug"))
+                .description(rs.getString("description"))
                 .price(rs.getBigDecimal("price"))
                 .stockQuantity(rs.getInt("stock_quantity"))
                 .categoryName(rs.getString("category_name"))
+                .isFeatured(rs.getBoolean("is_featured"))
+                .status(parseStatus(rs.getString("status")))
                 .tags(tags)
                 .images(images)
                 .build();
@@ -105,12 +113,25 @@ public class ProductAdminMapper {
                 .id(rs.getLong("id"))
                 .name(rs.getString("name"))
                 .slug(rs.getString("slug"))
+                .description(rs.getString("description"))
                 .price(rs.getBigDecimal("price"))
                 .stockQuantity(rs.getInt("stock_quantity"))
                 .categoryName(rs.getString("category_name"))
+                .isFeatured(rs.getBoolean("is_featured"))
+                .status(parseStatus(rs.getString("status")))
                 .tags(tags)
                 .images(images)
                 .build();
 
+    }
+
+    private ProductStatus parseStatus(String value) {
+        return value == null || value.isBlank() ? null : ProductStatus.valueOf(value);
+    }
+    public UpdateStatusResponseForAdmin mapUpdateStatusForProductByAdmin(Product product){
+        return UpdateStatusResponseForAdmin.builder()
+                .message("Product's status changed successfully to " + product.getStatus() +" ." )
+                .status(product.getStatus())
+                .build();
     }
 }

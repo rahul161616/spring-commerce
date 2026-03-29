@@ -1,5 +1,6 @@
 package com.jugger.springcommerce.modules.product.dto.admin;
 
+import com.jugger.springcommerce.modules.product.enums.ProductStatus;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
@@ -47,4 +48,5 @@ public class CreateProductRequest {
     private Boolean isFeatured;
 
     private List<ProductImageAdminRequest> images;
+    private ProductStatus status;
 }

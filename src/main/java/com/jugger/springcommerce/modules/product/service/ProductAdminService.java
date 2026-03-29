@@ -1,7 +1,6 @@
 package com.jugger.springcommerce.modules.product.service;
 
-import com.jugger.springcommerce.modules.product.dto.admin.CreateProductRequest;
-import com.jugger.springcommerce.modules.product.dto.admin.ProductAdminResponse;
+import com.jugger.springcommerce.modules.product.dto.admin.*;
 
 import java.util.List;
 
@@ -10,4 +9,6 @@ public interface ProductAdminService {
     List<ProductAdminResponse> getAllProductsForAdmin();
     ProductAdminResponse getProductByIdForAdmin(Long id);
     void softDeleteProductById(Long id);
+    ProductAdminResponse updateProductByAdmin(Long id, UpdateProductAdminRequest request);
+    UpdateStatusResponseForAdmin updateProductStatusByAdmin(UpdateStatusRequestByAdmin updateStatusRequestByAdmin);
 }
