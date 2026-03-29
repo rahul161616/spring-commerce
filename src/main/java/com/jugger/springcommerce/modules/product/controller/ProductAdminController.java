@@ -7,11 +7,7 @@ import com.jugger.springcommerce.modules.product.service.ProductAdminService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -32,5 +28,16 @@ public class ProductAdminController {
     public ResponseEntity<List<ProductAdminResponse>> getAllProductsForAdmin(){
         List<ProductAdminResponse> response = productAdminService.getAllProductsForAdmin();
         return ResponseEntity.ok().body(response);
+    }
+
+    @GetMapping("/{id}/product")
+    public ResponseEntity<ProductAdminResponse> getProductByIdForAdmin(@PathVariable("id") Long id){
+        ProductAdminResponse response = productAdminService.getProductByIdForAdmin(id);
+        return ResponseEntity.ok().body(response);
+    }
+    @DeleteMapping("/{id}/product")
+    public ResponseEntity<Void> softDeleteProduct(@PathVariable("id") Long id){
+        productAdminService.softDeleteProductById(id);
+        return ResponseEntity.noContent().build();
     }
 }

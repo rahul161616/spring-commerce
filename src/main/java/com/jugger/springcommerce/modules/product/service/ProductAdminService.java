@@ -8,4 +8,6 @@ import java.util.List;
 public interface ProductAdminService {
     ProductAdminResponse createProduct(CreateProductRequest request);
     List<ProductAdminResponse> getAllProductsForAdmin();
+    ProductAdminResponse getProductByIdForAdmin(Long id);
+    void softDeleteProductById(Long id);
 }
