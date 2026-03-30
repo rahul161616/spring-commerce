@@ -19,6 +19,7 @@ public class ProductAdminResponse {
     private String slug;
     private String description;
     private BigDecimal price;
+    private BigDecimal compareAt;
     private Integer stockQuantity;
     private String categoryName;
     private Boolean isFeatured;

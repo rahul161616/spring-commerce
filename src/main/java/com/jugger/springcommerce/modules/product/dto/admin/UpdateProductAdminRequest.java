@@ -20,6 +20,8 @@ public class UpdateProductAdminRequest {
     @DecimalMin(value = "0.01", message = "price must be greater than 0")
     private BigDecimal price;
 
+    private BigDecimal compareAt;
+
     @PositiveOrZero(message = "stockQuantity must be 0 or greater")
     private Integer stockQuantity;
 

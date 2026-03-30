@@ -59,6 +59,7 @@ public class ProductAdminServiceImpl implements ProductAdminService {
                 .slug(slug)
                 .description(request.getDescription())
                 .price(request.getPrice())
+                .compareAt(request.getCompareAt() != null ? request.getCompareAt() : request.getPrice())
                 .stockQuantity(request.getStockQuantity())
                 .category(category)
                 .isFeatured(request.getIsFeatured())
@@ -204,6 +205,7 @@ public class ProductAdminServiceImpl implements ProductAdminService {
                        p.slug,
                        p.description,
                        p.price,
+                       p.compare_at,
                        p.stock_quantity,
                        p.is_featured,
                        p.status,
@@ -239,6 +241,7 @@ public class ProductAdminServiceImpl implements ProductAdminService {
                    p.slug,
                    p.description,
                    p.price,
+                   p.compare_at,
                    p.stock_quantity,
                    p.is_featured,
                    p.status,
@@ -297,6 +300,9 @@ public class ProductAdminServiceImpl implements ProductAdminService {
         }
         if(request.getPrice() != null){
             product.setPrice(request.getPrice());
+        }
+        if(request.getCompareAt() != null){
+            product.setPrice(request.getCompareAt());
         }
         if(request.getStockQuantity() != null){
             product.setStockQuantity(request.getStockQuantity());

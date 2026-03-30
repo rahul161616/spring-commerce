@@ -49,6 +49,9 @@ public class Product extends BaseAuditEntity {
     @Column(nullable = false, precision = 15, scale = 2)
     private BigDecimal price;
 
+    @Column(precision = 15, scale = 2)
+    private BigDecimal compareAt;
+
     @Builder.Default
     @Column(name = "stock_quantity", nullable = false)
     private Integer stockQuantity = 0;
