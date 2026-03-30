@@ -43,6 +43,7 @@ public class CategoryMapper {
         return CategoryAdminResponse.builder()
                 .id(rs.getLong("id"))
                 .name(rs.getString("name"))
+                .slug(rs.getString("slug"))
                 .build();
     }
 }

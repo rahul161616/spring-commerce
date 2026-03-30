@@ -9,6 +9,7 @@ import com.jugger.springcommerce.modules.product.model.Category;
 import com.jugger.springcommerce.modules.product.repository.CategoryRepository;
 import com.jugger.springcommerce.modules.product.service.CategoryAdminService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -109,12 +110,55 @@ public class CategoryAdminServiceImpl implements CategoryAdminService {
     public List<CategoryAdminResponse> getAllCategoriesOptionsForAdmin() {
         String sql = """
                 SELECT c.id,
-                       c.name
+                       c.name,
+                       c.slug
                 FROM categories c
                 ORDER BY c.id DESC
                 """;
 
         return jdbcTemplate.query(sql, (rs, rowNum) -> categoryMapper.mapRowToAdminResponseForOptions(rs));
+    }
+    @Override
+    public CategoryAdminResponse getCategoryByIdForAdmin(Long id){
+        String sql = """
+            SELECT c.id,
+                   c.name,
+                   c.slug
+            FROM categories c
+            WHERE c.id = ?
+            """;
+
+        try {
+            return jdbcTemplate.queryForObject(
+                    sql,
+                    (rs, rowNum) -> categoryMapper.mapRowToAdminResponseForOptions(rs),
+                    id
+            );
+        } catch (EmptyResultDataAccessException e) {
+            throw new ResourceNotFoundException("Category not found with id: " + id + " or is already deleted.");
+        }
+    }
+    public CategoryAdminResponse updateCategoryByAdmin(Long id, CreateCategoryAdminRequest createCategoryAdminRequest){
+        Category category = categoryRepository.findById(id).orElseThrow(
+                ()-> new ResourceNotFoundException("Category not found or is already deleted.")
+        );
+        if(createCategoryAdminRequest.getName() != null){
+            String slug = generateUniqueSlug(createCategoryAdminRequest.getName(), id);
+            category.setName(createCategoryAdminRequest.getName());
+            category.setSlug(slug);
+        }
+        if(createCategoryAdminRequest.getDescription() != null){
+            category.setDescription(createCategoryAdminRequest.getDescription());
+        }
+        if(createCategoryAdminRequest.getParentId() != null){
+            category.setParent(categoryRepository.findById(createCategoryAdminRequest.getParentId()).orElseThrow(
+                    ()-> new ResourceNotFoundException("Parent category not found.")
+            ));
+        }
+        if(createCategoryAdminRequest.getIsActive() != null){
+            category.setIsActive(createCategoryAdminRequest.getIsActive());
+        }
+        return categoryMapper.mapToCategoryAdminResponse(categoryRepository.save(category));
     }
 }
 
