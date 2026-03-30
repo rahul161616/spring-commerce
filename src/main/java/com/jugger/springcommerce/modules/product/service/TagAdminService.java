@@ -8,4 +8,7 @@ import java.util.List;
 public interface TagAdminService {
     TagAdminResponse addTag(CreateTagAdminRequest createTagAdminRequest);
     List<TagAdminResponse> getAllTagsForAdmin();
+    TagAdminResponse getTagByIdForAdmin(Long id);
+    TagAdminResponse updateTagByAdmin(Long id, CreateTagAdminRequest createTagAdminRequest);
+    void deleteTagById(Long id);
 }

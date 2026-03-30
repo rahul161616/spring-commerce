@@ -1,6 +1,7 @@
 package com.jugger.springcommerce.modules.product.service.impl;
 
 import com.jugger.springcommerce.common.exception.BusinessException;
+import com.jugger.springcommerce.common.exception.ResourceNotFoundException;
 import com.jugger.springcommerce.modules.product.dto.admin.CreateTagAdminRequest;
 import com.jugger.springcommerce.modules.product.dto.admin.TagAdminResponse;
 import com.jugger.springcommerce.modules.product.mapper.TagMapper;
@@ -8,6 +9,7 @@ import com.jugger.springcommerce.modules.product.model.Tag;
 import com.jugger.springcommerce.modules.product.repository.TagRepository;
 import com.jugger.springcommerce.modules.product.service.TagAdminService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
@@ -95,5 +97,57 @@ public class TagAdminServiceImpl implements TagAdminService {
                 """;
 
         return jdbcTemplate.query(sql, (rs, rowNum) -> tagMapper.mapRowToAdminResponse(rs));
+    }
+    @Override
+    public TagAdminResponse getTagByIdForAdmin(Long id) {
+        String sql = """
+                SELECT t.id,
+                       t.name,
+                       t.slug,
+                       t.description,
+                       t.is_active
+                FROM tags t
+                where t.id = ?
+                """;
+        try {
+            return jdbcTemplate.queryForObject(
+                    sql,
+                    (rs, rowNum) -> tagMapper.mapRowToAdminResponse(rs),
+                    id
+            );
+        } catch (EmptyResultDataAccessException e) {
+            throw new ResourceNotFoundException("Tag not found with id: " + id);
+        }
+    }
+    @Override
+    public TagAdminResponse updateTagByAdmin(Long id,CreateTagAdminRequest createTagAdminRequest){
+        Tag tag = tagRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Tag not found"));
+
+        if (createTagAdminRequest.getName() != null &&
+                !createTagAdminRequest.getName().equals(tag.getName())) {
+
+            String slug = generateUniqueSlug(createTagAdminRequest.getName(), id);
+            tag.setName(createTagAdminRequest.getName());
+        }
+
+        if (createTagAdminRequest.getDescription() != null) {
+            tag.setDescription(createTagAdminRequest.getDescription());
+        }
+
+        if (createTagAdminRequest.getIsActive() != null) {
+            tag.setIsActive(createTagAdminRequest.getIsActive());
+        }
+
+        Tag saved = tagRepository.save(tag);
+        return tagMapper.mapToAdminResponse(saved);
+    }
+    public void deleteTagById(Long id){
+        Tag tag = tagRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Tag not found"));
+        if(tag.getIsActive()==true){
+            tag.setIsActive(false);
+            tagRepository.save(tag);
+        }
     }
 }
