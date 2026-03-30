@@ -34,4 +34,14 @@ public class CategoryAdminController {
         List<CategoryAdminResponse> categoryAdminResponse = categoryAdminService.getAllCategoriesOptionsForAdmin();
         return ResponseEntity.ok().body(categoryAdminResponse);
     }
+    @GetMapping("/{id}/category")
+    public ResponseEntity<CategoryAdminResponse> getCategoryByIdForAdmin(@PathVariable Long id){
+        CategoryAdminResponse categoryAdminResponse = categoryAdminService.getCategoryByIdForAdmin(id);
+        return ResponseEntity.ok().body(categoryAdminResponse);
+    }
+    @PatchMapping("/{id}/category")
+    public ResponseEntity<CategoryAdminResponse> updateCategoryByAdmin(@PathVariable Long id,@RequestBody CreateCategoryAdminRequest createCategoryAdminRequest){
+        CategoryAdminResponse categoryAdminResponse = categoryAdminService.updateCategoryByAdmin(id,createCategoryAdminRequest);
+        return ResponseEntity.ok().body(categoryAdminResponse);
+    }
 }

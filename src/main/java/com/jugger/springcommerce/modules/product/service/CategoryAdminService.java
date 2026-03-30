@@ -10,4 +10,7 @@ public interface CategoryAdminService {
     CategoryAdminResponse addCategory(CreateCategoryAdminRequest createCategoryAdminRequest);
     List<CategoryAdminResponse> getAllCategoriesforAdmin();
     List<CategoryAdminResponse> getAllCategoriesOptionsForAdmin();
+    CategoryAdminResponse getCategoryByIdForAdmin(Long id);
+    CategoryAdminResponse updateCategoryByAdmin(Long id, CreateCategoryAdminRequest createCategoryAdminRequest);
+
 }
