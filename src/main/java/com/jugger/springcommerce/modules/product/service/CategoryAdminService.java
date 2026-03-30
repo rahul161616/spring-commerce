@@ -12,5 +12,6 @@ public interface CategoryAdminService {
     List<CategoryAdminResponse> getAllCategoriesOptionsForAdmin();
     CategoryAdminResponse getCategoryByIdForAdmin(Long id);
     CategoryAdminResponse updateCategoryByAdmin(Long id, CreateCategoryAdminRequest createCategoryAdminRequest);
+    void deleteCategoryById(Long id);
 
 }

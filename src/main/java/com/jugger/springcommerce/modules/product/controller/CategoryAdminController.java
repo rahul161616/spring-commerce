@@ -44,4 +44,9 @@ public class CategoryAdminController {
         CategoryAdminResponse categoryAdminResponse = categoryAdminService.updateCategoryByAdmin(id,createCategoryAdminRequest);
         return ResponseEntity.ok().body(categoryAdminResponse);
     }
+    @DeleteMapping("/{id}/category")
+    public ResponseEntity<Void> deleteCategoryById(@PathVariable Long id){
+        categoryAdminService.deleteCategoryById(id);
+        return ResponseEntity.noContent().build();
+    }
 }

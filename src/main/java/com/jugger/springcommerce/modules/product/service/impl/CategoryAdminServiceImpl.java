@@ -160,5 +160,15 @@ public class CategoryAdminServiceImpl implements CategoryAdminService {
         }
         return categoryMapper.mapToCategoryAdminResponse(categoryRepository.save(category));
     }
+    @Override
+    public void deleteCategoryById(Long id){
+        Category category = categoryRepository.findById(id).orElseThrow(
+                ()-> new ResourceNotFoundException("Category not found or is already deleted.")
+        );
+        if(category.getIsActive()==true){
+            category.setIsActive(false);
+            categoryRepository.save(category);
+        }
+    }
 }
 
