@@ -20,4 +20,7 @@ public class ApiConstants {
 
     //orderapis
     public static final String ORDER_API = BASE_URL + "/public/orders";
+
+    //auth
+    public static final String AUTH = BASE_URL + "/public/auth";
 }

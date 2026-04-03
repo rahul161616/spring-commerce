@@ -43,8 +43,12 @@ public class GlobalExceptionHandler {
             HttpMessageNotReadableException exception,
             HttpServletRequest request
     ) {
+        String message = exception.getMessage() != null && exception.getMessage().contains("Required request body is missing")
+                ? "Request body is required"
+                : "Malformed request body";
+
         log.warn("Malformed request body for path {}", request.getRequestURI(), exception);
-        return buildResponse("Malformed request body", HttpStatus.BAD_REQUEST, ErrorCode.VALIDATION_ERROR, request.getRequestURI());
+        return buildResponse(message, HttpStatus.BAD_REQUEST, ErrorCode.VALIDATION_ERROR, request.getRequestURI());
     }
 
     @ExceptionHandler(Exception.class)
