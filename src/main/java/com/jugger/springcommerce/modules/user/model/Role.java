@@ -39,5 +39,5 @@ public class Role extends BaseAuditEntity {
     private String createdBy;
     private String updatedBy;
     private Instant createdAt;
-    private Instant cpdatedAt;
+    private Instant updatedAt;
 }
