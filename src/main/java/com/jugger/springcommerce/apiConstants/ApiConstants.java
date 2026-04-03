@@ -16,4 +16,7 @@ public class ApiConstants {
     public static final String HOMEPAGE_ADMIN_FEATURED_CATEGORY = BASE_URL + "/admin/homepage/featured-categories";
     public static final String HOMEPAGE_ADMIN_TRENDING_PRODUCTS = BASE_URL + "/admin/homepage/trending-products";
     public static final String HOMEPAGE_ADMIN_NEW_ARRIVAL = BASE_URL + "/admin/homepage/new-arrivals";
+
+    //orderapis
+    public static final String ORDER_API = BASE_URL + "/public/orders";
 }
