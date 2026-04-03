@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping(ApiConstants.ORDER_API)
-public class OrderController {
+public class OrderPublicController {
 
     private final OrderPublicService service;
 
