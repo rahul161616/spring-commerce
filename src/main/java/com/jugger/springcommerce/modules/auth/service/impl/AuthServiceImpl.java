@@ -8,7 +8,10 @@ import com.jugger.springcommerce.modules.auth.dto.UserSignUpRequest;
 import com.jugger.springcommerce.modules.auth.dto.UserSignUpResponse;
 import com.jugger.springcommerce.modules.auth.mapper.AuthLoginMapper;
 import com.jugger.springcommerce.modules.auth.mapper.AuthMapper;
+import com.jugger.springcommerce.modules.auth.model.RefreshToken;
+import com.jugger.springcommerce.modules.auth.repository.RefreshTokenRepository;
 import com.jugger.springcommerce.modules.auth.service.AuthService;
+import com.jugger.springcommerce.modules.auth.utils.JwtService;
 import com.jugger.springcommerce.modules.user.model.Role;
 import com.jugger.springcommerce.modules.user.model.UserProfile;
 import com.jugger.springcommerce.modules.user.repository.RoleRepository;
@@ -18,6 +21,10 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.time.Instant;
 import java.util.Set;
 import java.util.UUID;
 
@@ -29,6 +36,8 @@ public class AuthServiceImpl implements AuthService {
     private final AuthLoginMapper authLoginMapper;
     private final UserProfileRepository userProfileRepository;
     private final RoleRepository roleRepository;
+    private final RefreshTokenRepository refreshTokenRepository;
+    private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
 
     @Override
@@ -93,8 +102,32 @@ public class AuthServiceImpl implements AuthService {
             throw new GeneralRequestInvalidException("Invalid email or password");
         }
 
+        String accessToken = jwtService.generateAccessToken(user);
+        String refreshToken = jwtService.generateRefreshToken(user);
+
+        RefreshToken refreshTokenEntity = RefreshToken.builder()
+                .user(user)
+                .tokenHash(hashToken(refreshToken))
+                .expiresAt(Instant.now().plusMillis(jwtService.getRefreshTokenExpirationMs()))
+                .build();
+        refreshTokenRepository.save(refreshTokenEntity);
+
         log.info("User logged in successfully with id {}", user.getId());
-        return authLoginMapper.mapToLoginResponse(user);
+        return authLoginMapper.mapToLoginResponse(accessToken, refreshToken);
+    }
+
+    private String hashToken(String token) {
+        try {
+            MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
+            byte[] digest = messageDigest.digest(token.getBytes(StandardCharsets.UTF_8));
+            StringBuilder hex = new StringBuilder();
+            for (byte value : digest) {
+                hex.append(String.format("%02x", value));
+            }
+            return hex.toString();
+        } catch (NoSuchAlgorithmException exception) {
+            throw new IllegalStateException("Failed to hash refresh token", exception);
+        }
     }
 
 }
