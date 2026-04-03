@@ -1,6 +1,8 @@
 package com.jugger.springcommerce.modules.auth.utils;
 
 import com.jugger.springcommerce.modules.user.model.UserProfile;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
@@ -13,6 +15,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Date;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -63,6 +66,43 @@ public class JwtService {
 
     public long getRefreshTokenExpirationMs() {
         return refreshTokenExpirationMs;
+    }
+
+    public Claims extractAllClaims(String token) {
+        return Jwts.parser()
+                .verifyWith(signingKey)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+    }
+
+    public String extractSubject(String token) {
+        return extractAllClaims(token).getSubject();
+    }
+
+    public String extractEmail(String token) {
+        return extractAllClaims(token).get("email", String.class);
+    }
+
+    public UUID extractUserId(String token) {
+        return UUID.fromString(extractSubject(token));
+    }
+
+    public String extractTokenType(String token) {
+        return extractAllClaims(token).get("tokenType", String.class);
+    }
+
+    public boolean isTokenExpired(String token) {
+        Date expiration = extractAllClaims(token).getExpiration();
+        return expiration == null || expiration.before(new Date());
+    }
+
+    public boolean isTokenValid(String token) {
+        try {
+            return !isTokenExpired(token);
+        } catch (JwtException | IllegalArgumentException exception) {
+            return false;
+        }
     }
 
     private SecretKey buildSigningKey(String jwtSecret) {
