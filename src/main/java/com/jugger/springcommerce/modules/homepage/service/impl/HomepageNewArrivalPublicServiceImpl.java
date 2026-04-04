@@ -75,7 +75,7 @@ public class HomepageNewArrivalPublicServiceImpl implements HomepageNewArrivalPu
 
         if (tagId != null) {
             productSql.append("""
-                    AND EXISTS (
+                     AND EXISTS (
                         SELECT 1
                         FROM product_tags pt
                         WHERE pt.product_id = p.id
@@ -86,7 +86,7 @@ public class HomepageNewArrivalPublicServiceImpl implements HomepageNewArrivalPu
         }
 
         productSql.append("""
-                ORDER BY p.created_at DESC, p.id DESC
+                 ORDER BY p.created_at DESC, p.id DESC
                 LIMIT ?
                 """);
         params.add(limitCount);

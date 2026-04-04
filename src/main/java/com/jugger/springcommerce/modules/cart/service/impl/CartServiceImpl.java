@@ -18,6 +18,7 @@ import com.jugger.springcommerce.modules.product.model.Product;
 import com.jugger.springcommerce.modules.product.repository.ProductRepository;
 import com.jugger.springcommerce.modules.cart.service.CartService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,7 +38,7 @@ public class CartServiceImpl implements CartService {
     @Transactional(readOnly = true)
     public CartPublicResponse getActiveCart(String sessionId) {
         validateSessionId(sessionId);
-        Cart cart = cartRepository.findBySessionIdAndStatus(sessionId, CartStatus.ACTIVE)
+        Cart cart = findActiveCartOrThrow(normalizeSessionId(sessionId))
                 .orElseThrow(() -> new ResourceNotFoundException("Active cart not found for session: " + sessionId));
         return cartPublicMapper.mapToPublicResponse(cart);
     }
@@ -49,16 +50,9 @@ public class CartServiceImpl implements CartService {
             throw new BusinessException("Cart request is required");
         }
 
-        validateSessionId(request.getSessionId());
+        String sessionId = normalizeSessionId(request.getSessionId());
 
-        Cart cart = cartRepository.findBySessionIdAndStatus(request.getSessionId(), CartStatus.ACTIVE)
-                .orElseGet(() -> cartRepository.save(
-                        Cart.builder()
-                                .sessionId(request.getSessionId().trim())
-                                .currencyCode(normalizeCurrency(request.getCurrencyCode()))
-                                .status(CartStatus.ACTIVE)
-                                .build()
-                ));
+        Cart cart = findOrCreateActiveCart(sessionId, normalizeCurrency(request.getCurrencyCode()));
 
         return cartPublicMapper.mapToPublicResponse(cart);
     }
@@ -70,7 +64,7 @@ public class CartServiceImpl implements CartService {
             throw new BusinessException("Cart item request is required");
         }
 
-        validateSessionId(request.getSessionId());
+        String sessionId = normalizeSessionId(request.getSessionId());
 
         if (request.getProductId() == null) {
             throw new BusinessException("Product id is required");
@@ -84,14 +78,7 @@ public class CartServiceImpl implements CartService {
                 .filter(found -> found.getStatus() == ProductStatus.ACTIVE)
                 .orElseThrow(() -> new ResourceNotFoundException("Active product not found with id: " + request.getProductId()));
 
-        Cart cart = cartRepository.findBySessionIdAndStatus(request.getSessionId(), CartStatus.ACTIVE)
-                .orElseGet(() -> cartRepository.save(
-                        Cart.builder()
-                                .sessionId(request.getSessionId().trim())
-                                .currencyCode(normalizeCurrency(request.getCurrencyCode()))
-                                .status(CartStatus.ACTIVE)
-                                .build()
-                ));
+        Cart cart = findOrCreateActiveCart(sessionId, normalizeCurrency(request.getCurrencyCode()));
 
         CartItem cartItem = cartItemRepository.findByCartAndProduct(cart, product)
                 .orElseGet(() -> createCartItem(cart, product, normalizeCurrency(request.getCurrencyCode())));
@@ -156,6 +143,35 @@ public class CartServiceImpl implements CartService {
     private void validateSessionId(String sessionId) {
         if (sessionId == null || sessionId.isBlank()) {
             throw new BusinessException("Session id is required");
+        }
+    }
+
+    private String normalizeSessionId(String sessionId) {
+        validateSessionId(sessionId);
+        return sessionId.trim();
+    }
+
+    private java.util.Optional<Cart> findActiveCartOrThrow(String sessionId) {
+        return cartRepository.findBySessionIdAndStatus(sessionId, CartStatus.ACTIVE);
+    }
+
+    private Cart findOrCreateActiveCart(String sessionId, String currencyCode) {
+        return findActiveCartOrThrow(sessionId)
+                .orElseGet(() -> createActiveCartSafely(sessionId, currencyCode));
+    }
+
+    private Cart createActiveCartSafely(String sessionId, String currencyCode) {
+        try {
+            return cartRepository.save(
+                    Cart.builder()
+                            .sessionId(sessionId)
+                            .currencyCode(currencyCode)
+                            .status(CartStatus.ACTIVE)
+                            .build()
+            );
+        } catch (DataIntegrityViolationException exception) {
+            return findActiveCartOrThrow(sessionId)
+                    .orElseThrow(() -> exception);
         }
     }
 
