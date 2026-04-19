@@ -23,4 +23,7 @@ public class ApiConstants {
 
     //auth
     public static final String AUTH = BASE_URL + "/public/auth";
+
+    //user-profile
+    public static final String USER_PROFILE = BASE_URL + "/public/user-profile";
 }

@@ -29,9 +29,12 @@ public class UserProfile extends BaseAuditEntity {
     private String email;
     private String password;
     private String phone;
+    private String address;
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
     private Status status;
+    private String imageUrl;
+    private Boolean isVerified;
     private String createdBy;
     private String updatedBy;
     private Instant createdAt;
