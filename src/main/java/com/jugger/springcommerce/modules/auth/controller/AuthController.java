@@ -1,6 +1,8 @@
 package com.jugger.springcommerce.modules.auth.controller;
 
 import com.jugger.springcommerce.apiConstants.ApiConstants;
+import com.jugger.springcommerce.modules.auth.dto.TokenRefreshRequest;
+import com.jugger.springcommerce.modules.auth.dto.TokenRefreshResponse;
 import com.jugger.springcommerce.modules.auth.dto.UserLoginRequest;
 import com.jugger.springcommerce.modules.auth.dto.UserLoginResponse;
 import com.jugger.springcommerce.modules.auth.dto.UserSignUpRequest;
@@ -32,6 +34,12 @@ public class AuthController {
     public ResponseEntity<UserLoginResponse> loginUser(@Valid @RequestBody UserLoginRequest userLoginRequest) {
         UserLoginResponse userLoginResponse = authService.loginUser(userLoginRequest);
         return ResponseEntity.ok(userLoginResponse);
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<TokenRefreshResponse> refreshToken(@Valid @RequestBody TokenRefreshRequest tokenRefreshRequest) {
+        TokenRefreshResponse tokenRefreshResponse = authService.refreshToken(tokenRefreshRequest);
+        return ResponseEntity.ok(tokenRefreshResponse);
     }
 
 }

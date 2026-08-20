@@ -2,6 +2,8 @@ package com.jugger.springcommerce.modules.auth.service.impl;
 
 import com.jugger.springcommerce.common.dto.Status;
 import com.jugger.springcommerce.common.exception.GeneralRequestInvalidException;
+import com.jugger.springcommerce.modules.auth.dto.TokenRefreshRequest;
+import com.jugger.springcommerce.modules.auth.dto.TokenRefreshResponse;
 import com.jugger.springcommerce.modules.auth.dto.UserLoginRequest;
 import com.jugger.springcommerce.modules.auth.dto.UserLoginResponse;
 import com.jugger.springcommerce.modules.auth.dto.UserSignUpRequest;
@@ -20,6 +22,7 @@ import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -79,6 +82,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
+    @Transactional
     public UserLoginResponse loginUser(UserLoginRequest userLoginRequest){
         if(userLoginRequest == null){
             throw new GeneralRequestInvalidException("Login request cannot be null");
@@ -105,15 +109,63 @@ public class AuthServiceImpl implements AuthService {
         String accessToken = jwtService.generateAccessToken(user);
         String refreshToken = jwtService.generateRefreshToken(user);
 
-        RefreshToken refreshTokenEntity = RefreshToken.builder()
+        refreshTokenRepository.save(buildRefreshTokenEntity(user, refreshToken));
+
+        log.info("User logged in successfully with id {}", user.getId());
+        return authLoginMapper.mapToLoginResponse(accessToken, refreshToken);
+    }
+
+    @Override
+    @Transactional
+    public TokenRefreshResponse refreshToken(TokenRefreshRequest tokenRefreshRequest) {
+        if (tokenRefreshRequest == null) {
+            throw new GeneralRequestInvalidException("Refresh token request cannot be null");
+        }
+        if (tokenRefreshRequest.getRefreshToken() == null || tokenRefreshRequest.getRefreshToken().isBlank()) {
+            throw new GeneralRequestInvalidException("Refresh token cannot be null or blank");
+        }
+
+        String rawRefreshToken = tokenRefreshRequest.getRefreshToken().trim();
+        if (!jwtService.isTokenValid(rawRefreshToken) || !"refresh".equals(jwtService.extractTokenType(rawRefreshToken))) {
+            throw new GeneralRequestInvalidException("Invalid refresh token");
+        }
+
+        RefreshToken storedRefreshToken = refreshTokenRepository.findByTokenHash(hashToken(rawRefreshToken))
+                .orElseThrow(() -> new GeneralRequestInvalidException("Invalid refresh token"));
+
+        Instant now = Instant.now();
+        if (storedRefreshToken.getRevokedAt() != null || storedRefreshToken.getExpiresAt().isBefore(now)) {
+            throw new GeneralRequestInvalidException("Refresh token is expired or revoked");
+        }
+
+        String email = jwtService.extractEmail(rawRefreshToken);
+        UserProfile user = userProfileRepository.findByEmail(email)
+                .orElseThrow(() -> new GeneralRequestInvalidException("Refresh token user does not exist"));
+
+        if (user.getStatus() != Status.ACTIVE) {
+            throw new GeneralRequestInvalidException("User account is not active");
+        }
+
+        storedRefreshToken.setRevokedAt(now);
+        refreshTokenRepository.save(storedRefreshToken);
+
+        String accessToken = jwtService.generateAccessToken(user);
+        String nextRefreshToken = jwtService.generateRefreshToken(user);
+        refreshTokenRepository.save(buildRefreshTokenEntity(user, nextRefreshToken));
+
+        return TokenRefreshResponse.builder()
+                .message("Token refreshed successfully")
+                .accessToken(accessToken)
+                .refreshToken(nextRefreshToken)
+                .build();
+    }
+
+    private RefreshToken buildRefreshTokenEntity(UserProfile user, String refreshToken) {
+        return RefreshToken.builder()
                 .user(user)
                 .tokenHash(hashToken(refreshToken))
                 .expiresAt(Instant.now().plusMillis(jwtService.getRefreshTokenExpirationMs()))
                 .build();
-        refreshTokenRepository.save(refreshTokenEntity);
-
-        log.info("User logged in successfully with id {}", user.getId());
-        return authLoginMapper.mapToLoginResponse(accessToken, refreshToken);
     }
 
     private String hashToken(String token) {
